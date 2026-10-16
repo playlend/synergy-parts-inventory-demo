@@ -1,0 +1,170 @@
+;;; <summary>
+;;; ISAM access routines for the parts file (repository structure PART).
+;;; No output formatting here: callers own every message. Each routine
+;;; takes the file name or channel it works on, so the unit tests can use
+;;; a file of their own. File names are given without the .ism extension.
+;;; </summary>
+
+;;; <summary>
+;;; Creates (or re-creates) a parts ISAM file and loads it from a text file
+;;; with one part per line: partno|description|qty|reorder|price, price in
+;;; dollars like 8.95. Lines starting with ';' or a space are skipped.
+;;; </summary>
+;;; <param name="a_source">Text file to load.</param>
+;;; <param name="a_file">ISAM file to create, without extension (for example DAT:parts).</param>
+;;; <param name="a_count">Returns the number of parts stored.</param>
+subroutine parts_create
+    required in  a_source   ,a
+    required in  a_file     ,a
+    required out a_count    ,n
+.include "PART" repository, record="part"
+    record
+        line        ,a200
+        p1          ,i4
+        p2          ,i4
+        p3          ,i4
+        p4          ,i4
+        tin         ,i4
+        tout        ,i4
+    endrecord
+proc
+    ; remove an existing file; ignore "file not found"
+    onerror ignore1
+    xcall delet(%atrim(a_file) + '.ism')
+ignore1,
+    onerror ignore2
+    xcall delet(%atrim(a_file) + '.is1')
+ignore2,
+    offerror
+
+    xcall isamc(%atrim(a_file), ^size(part), 1, 'start=1, length=6, name=partno, nodups')
+
+    tin = %syn_freechn()
+    open(tin, i, a_source)
+    tout = %syn_freechn()
+    open(tout, u:i, %atrim(a_file))
+    a_count = 0
+    repeat
+    begin
+        reads(tin, line) [eof=done]
+        if (line(1:1) .eq. ';' .or. line(1:1) .eq. ' ')
+            nextloop
+        p1 = %instr(1, line, '|')
+        p2 = %instr(p1 + 1, line, '|')
+        p3 = %instr(p2 + 1, line, '|')
+        p4 = %instr(p3 + 1, line, '|')
+        clear part
+        partno  = line(1:p1 - 1)
+        descr   = line(p1 + 1:p2 - p1 - 1)
+        qty     = line(p2 + 1:p3 - p2 - 1)
+        reorder = line(p3 + 1:p4 - p3 - 1)
+        price   = line(p4 + 1:%trim(line) - p4)
+        store(tout, part)
+        incr a_count
+    end
+done,
+    close tin
+    close tout
+    xreturn
+endsubroutine
+
+;;; <summary>
+;;; Opens a parts ISAM file on a free channel.
+;;; </summary>
+;;; <param name="a_file">ISAM file, without extension.</param>
+;;; <param name="a_mode">'U' to open for update, anything else for input.</param>
+;;; <param name="a_ch">Returns the channel, or 0 if the file could not be opened.</param>
+;;; <returns>1 if the file is open, 0 if not (usually because it does not exist yet).</returns>
+function parts_open, ^val
+    required in  a_file     ,a
+    required in  a_mode     ,a
+    required out a_ch       ,n
+proc
+    a_ch = %syn_freechn()
+    if (a_mode .eq. 'U') then
+        open(a_ch, u:i, %atrim(a_file)) [err=nofile]
+    else
+        open(a_ch, i:i, %atrim(a_file)) [err=nofile]
+    freturn 1
+nofile,
+    a_ch = 0
+    freturn 0
+endfunction
+
+;;; <summary>
+;;; Closes a channel opened by parts_open. A channel of 0 is ignored.
+;;; </summary>
+;;; <param name="a_ch">Channel to close.</param>
+subroutine parts_close
+    required in  a_ch       ,n
+proc
+    if (a_ch)
+        close a_ch
+    xreturn
+endsubroutine
+
+;;; <summary>
+;;; Reads the part with the given part number. The channel stays on that
+;;; record, so a caller that opened the file for update can parts_update it.
+;;; </summary>
+;;; <param name="a_ch">Channel from parts_open.</param>
+;;; <param name="a_partno">Part number to look up.</param>
+;;; <param name="a_part">Returns the PART record.</param>
+;;; <returns>1 if the part was found, 0 if not.</returns>
+function parts_find, ^val
+    required in  a_ch       ,n
+    required in  a_partno   ,a
+    required out a_part     ,a
+proc
+    read(a_ch, a_part, a_partno) [err=notfound]
+    freturn 1
+notfound,
+    freturn 0
+endfunction
+
+;;; <summary>
+;;; Reads the first part in part-number order.
+;;; </summary>
+;;; <param name="a_ch">Channel from parts_open.</param>
+;;; <param name="a_part">Returns the PART record.</param>
+;;; <returns>1 if a part was read, 0 if the file is empty.</returns>
+function parts_first, ^val
+    required in  a_ch       ,n
+    required out a_part     ,a
+proc
+    read(a_ch, a_part, ^first) [err=empty]
+    freturn 1
+empty,
+    freturn 0
+endfunction
+
+;;; <summary>
+;;; Reads the next part in part-number order, after parts_first or
+;;; parts_next.
+;;; </summary>
+;;; <param name="a_ch">Channel from parts_open.</param>
+;;; <param name="a_part">Returns the PART record.</param>
+;;; <returns>1 if a part was read, 0 at the end of the file.</returns>
+function parts_next, ^val
+    required in  a_ch       ,n
+    required out a_part     ,a
+proc
+    reads(a_ch, a_part) [eof=atend]
+    freturn 1
+atend,
+    freturn 0
+endfunction
+
+;;; <summary>
+;;; Writes a changed part back. The file must be open for update and the
+;;; channel positioned on the part by parts_find.
+;;; </summary>
+;;; <param name="a_ch">Channel from parts_open with mode 'U'.</param>
+;;; <param name="a_part">The changed PART record.</param>
+subroutine parts_update
+    required in  a_ch       ,n
+    required in  a_part     ,a
+proc
+    write(a_ch, a_part)
+    xreturn
+endsubroutine

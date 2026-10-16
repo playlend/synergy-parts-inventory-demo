@@ -1,0 +1,107 @@
+import Synergex.TestFramework
+
+namespace PartsInventoryTests
+
+    ;;; <summary>
+    ;;; Tests for the ISAM routines in PartsInventoryLib\PartsIO.dbl. Before
+    ;;; each test, a three-part fixture is written to parts_test.txt and loaded
+    ;;; into a fresh parts_test.ism. Tests run with the build output folder
+    ;;; (Debug\x64) as the current directory, so the files are created there.
+    ;;; </summary>
+    {TestClass}
+    public class PartsIOTests
+
+        private loaded, int         ; parts stored by parts_create before this test
+        private ch, int             ; channel the test opened; closed after each test
+
+        {TestInitialize}
+        public method LoadFixture, void
+            endparams
+            record
+                tch         ,i4
+                count       ,i4
+            endrecord
+        proc
+            tch = %syn_freechn()
+            open(tch, o, 'parts_test.txt')
+            writes(tch, '; partno|description|qty|reorder|price')
+            writes(tch, '200100|Bearing 6204-2RS|18|10|8.95')
+            writes(tch, '100100|Hex bolt M8 x 40|250|100|0.45')
+            writes(tch, '300200|V-belt A48|3|5|15.90')
+            close tch
+            xcall parts_create('parts_test.txt', 'parts_test', count)
+            loaded = count
+            ch = 0
+        endmethod
+
+        {TestCleanup}
+        public method CloseFile, void
+            endparams
+        proc
+            xcall parts_close(ch)
+            ch = 0
+        endmethod
+
+        {TestMethod}
+        public method CreateLoadsEveryPart, void
+            endparams
+        proc
+            Assert.AreEqual(3, loaded)
+        endmethod
+
+        {TestMethod}
+        public method FindReturnsThePart, void
+            endparams
+            .include "PART" repository, record="part"
+        proc
+            Assert.AreEqual(1, %parts_open('parts_test', 'I', ch))
+            Assert.AreEqual(1, %parts_find(ch, '200100', part))
+            Assert.AreEqual("Bearing 6204-2RS", %atrim(descr), false)
+            Assert.AreEqual(18, qty)
+            Assert.AreEqual(10, reorder)
+            Assert.AreEqual(8.95, price)
+        endmethod
+
+        {TestMethod}
+        public method FindMissingPartReturnsZero, void
+            endparams
+            .include "PART" repository, record="part"
+        proc
+            Assert.AreEqual(1, %parts_open('parts_test', 'I', ch))
+            Assert.AreEqual(0, %parts_find(ch, '999999', part))
+        endmethod
+
+        {TestMethod}
+        public method FirstAndNextReadInKeyOrder, void
+            endparams
+            .include "PART" repository, record="part"
+        proc
+            Assert.AreEqual(1, %parts_open('parts_test', 'I', ch))
+            Assert.AreEqual(1, %parts_first(ch, part))
+            Assert.AreEqual("100100", partno, false)
+            Assert.AreEqual(1, %parts_next(ch, part))
+            Assert.AreEqual("200100", partno, false)
+            Assert.AreEqual(1, %parts_next(ch, part))
+            Assert.AreEqual("300200", partno, false)
+            Assert.AreEqual(0, %parts_next(ch, part))
+        endmethod
+
+        {TestMethod}
+        public method UpdateSavesTheNewQuantity, void
+            endparams
+            .include "PART" repository, record="part"
+        proc
+            Assert.AreEqual(1, %parts_open('parts_test', 'U', ch))
+            Assert.AreEqual(1, %parts_find(ch, '300200', part))
+            qty = qty + 10
+            xcall parts_update(ch, part)
+            xcall parts_close(ch)
+
+            Assert.AreEqual(1, %parts_open('parts_test', 'I', ch))
+            Assert.AreEqual(1, %parts_find(ch, '300200', part))
+            Assert.AreEqual(13, qty)
+        endmethod
+
+    endclass
+
+endnamespace

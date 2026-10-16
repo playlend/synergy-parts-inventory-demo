@@ -1,0 +1,44 @@
+import Synergex.TestFramework
+
+namespace PartsInventoryTests
+
+    ;;; <summary>
+    ;;; Tests for the business rules in PartsInventoryLib\PartsRules.dbl.
+    ;;; Each test builds a PART record in memory; no files are used.
+    ;;; </summary>
+    {TestClass}
+    public class PartsRulesTests
+
+        {TestMethod}
+        public method CanIssueLessThanOnHand, void
+            endparams
+            .include "PART" repository, record="part"
+        proc
+            clear part
+            qty = 10
+            Assert.AreEqual(1, %parts_can_issue(part, 4))
+        endmethod
+
+        {TestMethod}
+        public method CanIssueEverythingOnHand, void
+            endparams
+            .include "PART" repository, record="part"
+        proc
+            clear part
+            qty = 10
+            Assert.AreEqual(1, %parts_can_issue(part, 10))
+        endmethod
+
+        {TestMethod}
+        public method CannotIssueMoreThanOnHand, void
+            endparams
+            .include "PART" repository, record="part"
+        proc
+            clear part
+            qty = 10
+            Assert.AreEqual(0, %parts_can_issue(part, 11))
+        endmethod
+
+    endclass
+
+endnamespace

@@ -3,10 +3,10 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="PartsInventory/PartsInventory.synproj" Type="bbd0f5d1-1cc4-42fd-ba4c-a96779c64378" />
-  <Project Path="PartsInventoryLib/PartsInventoryLib.synproj" Type="bbd0f5d1-1cc4-42fd-ba4c-a96779c64378" />
-  <Project Path="PartsInventoryRepository/PartsInventoryRepository.synproj" Type="bbd0f5d1-1cc4-42fd-ba4c-a96779c64378">
+  <Project Path="PartsInventory/PartsInventory.synproj" Type="bbd0f5d1-1cc4-42fd-ba4c-a96779c64378" Id="2e6d7781-99ab-46ca-83f4-4f45dcb2dcf4" />
+  <Project Path="PartsInventoryLib/PartsInventoryLib.synproj" Type="bbd0f5d1-1cc4-42fd-ba4c-a96779c64378" Id="fc766e51-ea0f-4d16-b649-9cfd4623ad53" />
+  <Project Path="PartsInventoryRepository/PartsInventoryRepository.synproj" Type="bbd0f5d1-1cc4-42fd-ba4c-a96779c64378" Id="f2733a69-44e9-4179-b1ac-5da5747c2e8f">
     <Platform Project="AnyCPU" />
   </Project>
-  <Project Path="PartsInventoryTests/PartsInventoryTests.synproj" Type="bbd0f5d1-1cc4-42fd-ba4c-a96779c64378" />
+  <Project Path="PartsInventoryTests/PartsInventoryTests.synproj" Type="bbd0f5d1-1cc4-42fd-ba4c-a96779c64378" Id="3dae9b1b-7cea-4aa5-b3c1-961622e0804e" />
 </Solution>

@@ -1,0 +1,11 @@
+Add a reorder rule to the parts inventory.
+
+Goal: a function parts_needs_reorder in PartsInventoryLib\PartsRules.dbl that returns 1 when a part's quantity on hand is at or below its reorder level, and 0 otherwise.
+
+Context: copy the parts_can_issue pattern for the function and its tests. CLAUDE.md has the build and test commands.
+
+Test first: add three tests to PartsInventoryTests\PartsRulesTests.dbl: below the reorder level, exactly at it, and above it. Show me the tests and wait for my OK before changing anything else.
+
+Constraints: don't change PartsIO.dbl, Program.dbl, or repository.scm, and don't change or delete existing tests.
+
+Done when: the build is clean and the test run passes with 11 tests. Paste the test summary.

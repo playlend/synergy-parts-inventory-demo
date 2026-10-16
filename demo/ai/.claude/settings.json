@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "PowerShell(msbuild *)",
+      "PowerShell(msbuild.exe *)",
+      "PowerShell(vstest.console *)",
+      "PowerShell(vstest.console.exe *)",
+      "PowerShell(nuget restore *)",
+      "PowerShell(git status *)",
+      "PowerShell(git diff *)",
+      "Bash(msbuild *)",
+      "Bash(msbuild.exe *)",
+      "Bash(vstest.console *)",
+      "Bash(vstest.console.exe *)",
+      "Bash(nuget restore *)"
+    ]
+  }
+}

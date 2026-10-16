@@ -1,9 +1,202 @@
-
 ;;; <summary>
-;;; The main entry point for the application.
+;;; Parts inventory command-line program. EXEDIR must point at the build
+;;; output and DAT at the data folder (Common.props sets both for Visual
+;;; Studio). Run it as dbr PartsInventory <command>:
+;;;
+;;;   load                      rebuild DAT:parts.ism from DAT:parts.txt
+;;;   list                      list every part in part-number order
+;;;   find <partno>             show one part
+;;;   receive <partno> <qty>    add stock
+;;;   issue <partno> <qty>      remove stock (fails if not enough on hand)
+;;;
+;;; All output is written here, one internal subroutine per command
+;;; (do_<command>). File access and business rules live in PartsInventoryLib.
 ;;; </summary>
 main
-
+.define TT, 1                       ; terminal channel
+.define PARTS_FILE, 'DAT:parts'     ; parts ISAM file, no extension
+.define SEED_FILE, 'DAT:parts.txt'  ; seed data for "load"
+.include "PART" repository, record="part"
+    record
+        cmd         ,a512           ; full command line
+        nargs       ,i4
+        apos        ,[20]i4
+        alen        ,[20]i4
+        action      ,a10
+        arg1        ,a6             ; part number argument
+        arg2        ,a10            ; quantity argument
+        amount      ,d6
+        count       ,i4
+        i           ,i4
+        numok       ,i4
+        more        ,i4
+        ch          ,i4             ; parts file channel
+        hdesc       ,a30
+    endrecord
 proc
+    open(TT, o, 'tt:')
+    xcall cmdln(cmd, nargs, apos, alen)
+    ; argument 1 is the runtime, 2 is the program, 3 is the command
+    if (nargs .lt. 3)
+    begin
+        call usage
+        close TT
+        stop
+    end
+    action = cmd(apos[3]:alen[3])
+    upcase action
+    if (action .eq. 'LOAD') then
+        call do_load
+    else if (action .eq. 'LIST') then
+        call do_list
+    else if (action .eq. 'FIND') then
+        call do_find
+    else if (action .eq. 'RECEIVE') then
+        call do_receive
+    else if (action .eq. 'ISSUE') then
+        call do_issue
+    else
+        call usage
+    close TT
+    stop
+
+;--------------------------------------------------------------------
+usage,
+    writes(TT, 'usage: dbr PartsInventory load | list | find <partno> | receive <partno> <qty> | issue <partno> <qty>')
+    return
+
+;--------------------------------------------------------------------
+do_load,
+    xcall parts_create(SEED_FILE, PARTS_FILE, count)
+    writes(TT, %string(count) + ' parts loaded from ' + SEED_FILE)
+    return
+
+;--------------------------------------------------------------------
+do_list,
+    if (.not. %parts_open(PARTS_FILE, 'I', ch))
+    begin
+        call noparts
+        return
+    end
+    call print_header
+    count = 0
+    more = %parts_first(ch, part)
+    while (more)
+    begin
+        call print_part
+        incr count
+        more = %parts_next(ch, part)
+    end
+    writes(TT, %string(count) + ' parts')
+    xcall parts_close(ch)
+    return
+
+;--------------------------------------------------------------------
+do_find,
+    if (nargs .lt. 4)
+    begin
+        writes(TT, 'usage: dbr PartsInventory find <partno>')
+        return
+    end
+    arg1 = cmd(apos[4]:alen[4])
+    if (.not. %parts_open(PARTS_FILE, 'I', ch))
+    begin
+        call noparts
+        return
+    end
+    if (%parts_find(ch, arg1, part)) then
+        call print_part
+    else
+        writes(TT, 'part ' + %atrim(arg1) + ' not found')
+    xcall parts_close(ch)
+    return
+
+;--------------------------------------------------------------------
+do_receive,
+    call get_part_and_amount
+    if (.not. numok)
+        return
+    if (%parts_find(ch, arg1, part)) then
+    begin
+        qty = qty + amount
+        xcall parts_update(ch, part)
+        writes(TT, 'received ' + %string(amount) + ' of ' + partno + ', now ' + %string(qty) + ' on hand')
+    end
+    else
+        writes(TT, 'part ' + %atrim(arg1) + ' not found')
+    xcall parts_close(ch)
+    return
+
+;--------------------------------------------------------------------
+do_issue,
+    call get_part_and_amount
+    if (.not. numok)
+        return
+    if (%parts_find(ch, arg1, part)) then
+    begin
+        if (%parts_can_issue(part, amount)) then
+        begin
+            qty = qty - amount
+            xcall parts_update(ch, part)
+            writes(TT, 'issued ' + %string(amount) + ' of ' + partno + ', now ' + %string(qty) + ' on hand')
+        end
+        else
+            writes(TT, 'cannot issue ' + %string(amount) + ' of ' + partno + ': only ' + %string(qty) + ' on hand')
+    end
+    else
+        writes(TT, 'part ' + %atrim(arg1) + ' not found')
+    xcall parts_close(ch)
+    return
+
+;--------------------------------------------------------------------
+; get_part_and_amount: parse <partno> <qty> for receive and issue, and
+; open the parts file for update. Sets numok to 1 when both are usable.
+;--------------------------------------------------------------------
+get_part_and_amount,
+    numok = 0
+    if (nargs .lt. 5)
+    begin
+        writes(TT, 'usage: dbr PartsInventory ' + %atrim(action) + ' <partno> <qty>')
+        return
+    end
+    arg1 = cmd(apos[4]:alen[4])
+    arg2 = cmd(apos[5]:alen[5])
+    for i from 1 thru %trim(arg2)
+    begin
+        if (arg2(i:1) .lt. '0' .or. arg2(i:1) .gt. '9')
+        begin
+            writes(TT, 'quantity must be a whole number: ' + %atrim(arg2))
+            return
+        end
+    end
+    amount = arg2(1:%trim(arg2))
+    if (amount .eq. 0)
+    begin
+        writes(TT, 'quantity must be greater than zero')
+        return
+    end
+    if (.not. %parts_open(PARTS_FILE, 'U', ch))
+    begin
+        call noparts
+        return
+    end
+    numok = 1
+    return
+
+;--------------------------------------------------------------------
+print_header,
+    hdesc = 'DESCRIPTION'
+    writes(TT, 'PARTNO  ' + hdesc + '    QTY REORDER     PRICE')
+    return
+
+;--------------------------------------------------------------------
+print_part,
+    writes(TT, partno + '  ' + descr + ' ' + %string(qty, 'ZZZZZX') + ' ' + %string(reorder, 'ZZZZZZX') + ' ' + %string(price, 'ZZZZZX.XX'))
+    return
+
+;--------------------------------------------------------------------
+noparts,
+    writes(TT, 'no parts file yet: run the load command first')
+    return
 
 endmain

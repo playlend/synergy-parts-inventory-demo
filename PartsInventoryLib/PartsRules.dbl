@@ -1,0 +1,22 @@
+;;; <summary>
+;;; Business rules for parts. Each rule is a function of a PART record with
+;;; no file access and no output, and each one has unit tests in
+;;; PartsInventoryTests\PartsRulesTests.dbl.
+;;; </summary>
+
+;;; <summary>
+;;; Says whether a quantity can be issued from a part's stock.
+;;; </summary>
+;;; <param name="a_part">PART record.</param>
+;;; <param name="a_amount">Quantity to issue.</param>
+;;; <returns>1 if a_amount is more than zero and no more than the quantity on hand, otherwise 0.</returns>
+function parts_can_issue, ^val
+    required in  a_part     ,a
+    required in  a_amount   ,n
+.include "PART" repository, record="part"
+proc
+    part = a_part
+    if (a_amount .gt. 0 .and. a_amount .le. qty)
+        freturn 1
+    freturn 0
+endfunction

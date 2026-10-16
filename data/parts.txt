@@ -1,0 +1,11 @@
+; partno|description|qty|reorder|price
+100100|Hex bolt M8 x 40|250|100|0.45
+100200|Hex nut M8|400|150|0.12
+100300|Flat washer M8|120|200|0.05
+200100|Bearing 6204-2RS|18|10|8.95
+200200|Bearing 6205-2RS|6|8|11.20
+300100|V-belt A42|12|5|14.50
+300200|V-belt A48|3|5|15.90
+400100|Hydraulic hose 1/2in x 1m|7|4|32.00
+400200|Hydraulic fitting JIC-8|60|25|6.40
+500100|Grease cartridge 400g|45|50|7.80

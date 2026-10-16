@@ -56,12 +56,25 @@
     <DBLink_ReferenceCheck>True</DBLink_ReferenceCheck>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="UnitTest1.dbl" />
+    <Compile Include="PartsIOTests.dbl" />
+    <Compile Include="PartsRulesTests.dbl" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="SYNTRADUT:TestFramework.elb">
       <Private>False</Private>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PartsInventoryLib\PartsInventoryLib.synproj">
+      <Name>PartsInventoryLib</Name>
+      <Project>{fc766e51-ea0f-4d16-b649-9cfd4623ad53}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\PartsInventoryRepository\PartsInventoryRepository.synproj">
+      <Name>PartsInventoryRepository</Name>
+      <Project>{f2733a69-44e9-4179-b1ac-5da5747c2e8f}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Synergex\dbl\Synergex.SynergyDE.Traditional.UnitTest.targets" />
   <PropertyGroup>
