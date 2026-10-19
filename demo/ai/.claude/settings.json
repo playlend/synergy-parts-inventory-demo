@@ -7,6 +7,8 @@
       "PowerShell(vstest.console *)",
       "PowerShell(vstest.console.exe *)",
       "PowerShell(nuget restore *)",
+      "PowerShell(dbs *)",
+      "PowerShell(dbs.exe *)",
       "PowerShell(git status *)",
       "PowerShell(git diff *)",
       "Bash(msbuild *)",

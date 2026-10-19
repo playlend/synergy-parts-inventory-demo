@@ -2,7 +2,8 @@
 
 ISAM-backed parts inventory. Windows, Synergy/DE 12 x64, Visual Studio with SDI.
 The shell is a Developer PowerShell for Visual Studio, so `msbuild` and `vstest.console`
-are on PATH. Run every command from the repository root.
+are on PATH, and the user has set `EXEDIR` and `DAT` for running the program.
+Run every command from the repository root.
 
 ## Build, test, run
 - Restore, only if `packages\` is missing: `nuget restore PartsInventory.slnx`. If nuget isn't
@@ -14,10 +15,11 @@ are on PATH. Run every command from the repository root.
   It does not build, so build first. One test: add `/Tests:<MethodName>` before the `--`.
   Success is `Test Run Successful` with a total that includes every new test. A run where no
   test runs exits 1; that is a failure, not a pass. There is no MSBuild target for these tests.
-- Run the program (not needed to check a change; the tests are the check): it needs the logicals
-  `EXEDIR` and `DAT`. In PowerShell, as one command:
-  `$env:EXEDIR="$PWD\Debug\x64\"; $env:DAT="$PWD\data\"; dbr Debug\x64\PartsInventory.dbr list`.
-  After a fresh clone, run `load` first. If `dbr` isn't found, it's in `$env:SYNERGYDE64\dbl\bin`.
+- Run: `dbs Debug\x64\PartsInventory.dbr <command>`, for example `list`. The program needs the
+  logicals `EXEDIR` (the build output, for `PartsInventoryLib.elb`) and `DAT` (the data folder).
+  If it says `Cannot open EXEDIR:PartsInventoryLib.elb` or `no parts file at DAT:parts.ism`, set
+  them in the same command: `$env:EXEDIR="$PWD\Debug\x64\"; $env:DAT="$PWD\data\"; dbs ...`.
+  After a fresh clone, run `load` first. If `dbs` isn't found, it's in `$env:SYNERGYDE64\dbl\bin`.
 
 ## Layout
 - `PartsInventoryRepository\repository.scm`: structure `PART`, file `PARTS`. Field names and sizes
@@ -52,5 +54,6 @@ are on PATH. Run every command from the repository root.
 ## Definition of done
 1. The tests for the change come first, and the user approves them before any other code changes.
 2. The build is clean (no errors, no new warnings), and the test run passes with the new tests in the total.
-3. A new command is in the usage text and header comment of `Program.dbl` and in the command list in `README.md`.
+3. A new command is in the usage text and header comment of `Program.dbl` and in the command list
+   in `README.md`, and you have run it once and checked its output against `data\parts.txt`.
 4. Never weaken, skip, or delete an existing test to get a green run. If a test looks wrong, stop and say so.

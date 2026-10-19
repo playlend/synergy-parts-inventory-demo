@@ -1,7 +1,7 @@
 ;;; <summary>
 ;;; Parts inventory command-line program. EXEDIR must point at the build
 ;;; output and DAT at the data folder (Common.props sets both for Visual
-;;; Studio). Run it as dbr PartsInventory <command>:
+;;; Studio). Run it as dbs PartsInventory <command>:
 ;;;
 ;;;   load                      rebuild DAT:parts.ism from DAT:parts.txt
 ;;;   list                      list every part in part-number order
@@ -62,7 +62,7 @@ proc
 
 ;--------------------------------------------------------------------
 usage,
-    writes(TT, 'usage: dbr PartsInventory load | list | find <partno> | receive <partno> <qty> | issue <partno> <qty>')
+    writes(TT, 'usage: dbs PartsInventory load | list | find <partno> | receive <partno> <qty> | issue <partno> <qty>')
     return
 
 ;--------------------------------------------------------------------
@@ -95,7 +95,7 @@ do_list,
 do_find,
     if (nargs .lt. 4)
     begin
-        writes(TT, 'usage: dbr PartsInventory find <partno>')
+        writes(TT, 'usage: dbs PartsInventory find <partno>')
         return
     end
     arg1 = cmd(apos[4]:alen[4])
@@ -156,7 +156,7 @@ get_part_and_amount,
     numok = 0
     if (nargs .lt. 5)
     begin
-        writes(TT, 'usage: dbr PartsInventory ' + %atrim(action) + ' <partno> <qty>')
+        writes(TT, 'usage: dbs PartsInventory ' + %atrim(action) + ' <partno> <qty>')
         return
     end
     arg1 = cmd(apos[4]:alen[4])
@@ -196,7 +196,7 @@ print_part,
 
 ;--------------------------------------------------------------------
 noparts,
-    writes(TT, 'no parts file yet: run the load command first')
+    writes(TT, 'no parts file at DAT:parts.ism: check DAT, or run the load command first')
     return
 
 endmain

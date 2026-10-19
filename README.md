@@ -42,9 +42,12 @@ root:
 ```
 set EXEDIR=%CD%\Debug\x64\
 set DAT=%CD%\data\
-dbr Debug\x64\PartsInventory.dbr load
-dbr Debug\x64\PartsInventory.dbr list
+dbs Debug\x64\PartsInventory.dbr load
+dbs Debug\x64\PartsInventory.dbr list
 ```
+
+In PowerShell, set them with `$env:EXEDIR = "$PWD\Debug\x64\"` and
+`$env:DAT = "$PWD\data\"`.
 
 | Command | What it does |
 |---------|--------------|
